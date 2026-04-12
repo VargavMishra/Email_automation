@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  MOCK
+}
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ProjectStatus {
+  DRAFT
+  GENERATED
+}
+
+model User {
+  id                     String        @id @default(auto()) @map("_id") @db.ObjectId
+  email                  String        @unique
+  name                   String?
+  passwordHash           String?
+  role                   Role          @default(USER)
+  googleId               String?       
+  refreshTokenHash       String?
+  resetTokenHash         String?
+  resetTokenExpiresAt    DateTime?
+  emailVerifiedAt        DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  subscription           Subscription?
+  payments               Payment[]
+  projects               Project[]
+}
+
+model Subscription {
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String             @unique @db.ObjectId
+  plan               Plan               @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd   DateTime?
+  provider           PaymentProvider    @default(MOCK)
+  providerCustomerId String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user               User               @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String          @db.ObjectId
+  provider          PaymentProvider
+  status            PaymentStatus   @default(CREATED)
+  plan              Plan
+  amount            Int
+  currency          String          @default("INR")
+  providerOrderId   String?
+  providerPaymentId String?
+  providerSignature String?
+  metadata          Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  user              User            @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Project {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String        @db.ObjectId
+  name            String
+  slug            String
+  status          ProjectStatus @default(DRAFT)
+  featureConfig   Json
+  lastGeneratedAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
