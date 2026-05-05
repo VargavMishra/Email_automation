@@ -40,8 +40,8 @@ export function createApp() {
     }
   }));
 
-  app.get('/health', (_req, res) => {
-    res.json({ ok: true, service: 'photo-studio-automation' });
+  app.get(['/', '/health'], (_req, res) => {
+    res.json({ ok: true, service: 'photo-studio-automation', status: 'live' });
   });
 
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
