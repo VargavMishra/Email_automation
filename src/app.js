@@ -20,7 +20,10 @@ export function createApp() {
 
   app.disable('x-powered-by');
   app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN, credentials: true }));
+  app.use(cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials: true
+  }));
   app.use(compression({
     filter: (req, res) => {
       if (req.path === '/api/studio/events') {
