@@ -7,7 +7,7 @@ export function errorHandler(error, _req, res, _next) {
   let normalized = error;
 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    normalized = new AppError('Database request failed', 400, { code: error.code });
+    normalized = new AppError(`Database request failed (${error.code}): ${error.message}`, 400, { code: error.code });
   }
 
   const statusCode = normalized.statusCode ?? 500;

@@ -54,7 +54,7 @@ export function getDeliveryEligibility(project) {
   }
 
   if (!followUpSatisfied) {
-    reasons.push('Follow-up is still pending for this project.');
+    reasons.push('Client check-in is still pending for this project.');
   }
 
   if (project.deliveryEmailSent) {

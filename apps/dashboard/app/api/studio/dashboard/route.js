@@ -26,30 +26,42 @@ export async function GET() {
     return response;
   }
 
-  const [overviewResult, clientsResult, projectsResult, logsResult] = await Promise.all([
-    authenticatedBackendRequest({
-      path: '/api/studio/overview',
-      accessToken: session.accessToken
-    }),
-    authenticatedBackendRequest({
-      path: '/api/studio/clients',
-      accessToken: session.accessToken
-    }),
-    authenticatedBackendRequest({
-      path: '/api/studio/projects',
-      accessToken: session.accessToken
-    }),
-    authenticatedBackendRequest({
-      path: '/api/studio/logs',
-      accessToken: session.accessToken
-    })
-  ]);
+  let overviewResult;
+  let clientsResult;
+  let projectsResult;
+  let logsResult;
+
+  try {
+    [overviewResult, clientsResult, projectsResult, logsResult] = await Promise.all([
+      authenticatedBackendRequest({
+        path: '/api/studio/overview',
+        accessToken: session.accessToken
+      }),
+      authenticatedBackendRequest({
+        path: '/api/studio/clients',
+        accessToken: session.accessToken
+      }),
+      authenticatedBackendRequest({
+        path: '/api/studio/projects',
+        accessToken: session.accessToken
+      }),
+      authenticatedBackendRequest({
+        path: '/api/studio/logs',
+        accessToken: session.accessToken
+      })
+    ]);
+  } catch (error) {
+    return NextResponse.json(
+      { message: `Backend API is not reachable. Start the backend and check API_BASE_URL. ${error.message}` },
+      { status: 502 }
+    );
+  }
 
   const failingResult = [overviewResult, clientsResult, projectsResult, logsResult].find((result) => !result.response.ok);
 
   if (failingResult) {
     return NextResponse.json(
-      { message: failingResult.payload?.message ?? 'Unable to load dashboard data.' },
+      { message: failingResult.payload?.error?.message ?? failingResult.payload?.message ?? 'Unable to load dashboard data.' },
       { status: failingResult.response.status }
     );
   }

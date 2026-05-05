@@ -202,7 +202,7 @@ model StudioProject {
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 
-  client               StudioClient         @relation(fields: [clientId], references: [id])
+  client               StudioClient?        @relation(fields: [clientId], references: [id])
   owner                User?                @relation("StudioProjectOwner", fields: [ownerId], references: [id])
   dispatch             DeliveryDispatch?
   emailLogs            DeliveryEmailLog[]
@@ -230,7 +230,7 @@ model DeliveryDispatch {
   createdAt           DateTime               @default(now())
   updatedAt           DateTime               @updatedAt
 
-  project             StudioProject          @relation(fields: [projectId], references: [id])
+  project             StudioProject?          @relation(fields: [projectId], references: [id])
   emailLogs           DeliveryEmailLog[]
 
   @@index([status, nextAttemptAt])
@@ -259,8 +259,8 @@ model DeliveryEmailLog {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
-  project           StudioProject    @relation(fields: [projectId], references: [id])
-  client            StudioClient     @relation(fields: [clientId], references: [id])
+  project           StudioProject?    @relation(fields: [projectId], references: [id])
+  client            StudioClient?     @relation(fields: [clientId], references: [id])
   dispatch          DeliveryDispatch? @relation(fields: [dispatchId], references: [id])
 
   @@index([projectId, status])

@@ -23,6 +23,7 @@ import {
   createStudioClient,
   createStudioProject,
   deleteStudioClient,
+  deleteStudioProject,
   extendStudioProjectDeadline,
   getStudioOverview,
   listDeliveryLogs,
@@ -149,6 +150,22 @@ studioRouter.get('/events', (req, res) => {
 studioRouter.get('/overview', asyncHandler(async (_req, res) => {
   const overview = await getStudioOverview();
   res.json({ overview });
+}));
+
+studioRouter.get('/dashboard', asyncHandler(async (_req, res) => {
+  const [overview, clients, projects, logs] = await Promise.all([
+    getStudioOverview(),
+    listStudioClients(),
+    listStudioProjects(),
+    listDeliveryLogs()
+  ]);
+
+  res.json({
+    overview,
+    clients,
+    projects,
+    logs
+  });
 }));
 
 /**
@@ -352,6 +369,11 @@ studioRouter.patch('/projects/:id', validate(studioProjectUpdateSchema), asyncHa
   });
 
   res.json({ project });
+}));
+
+studioRouter.delete('/projects/:id', validate(studioIdSchema), asyncHandler(async (req, res) => {
+  await deleteStudioProject(req.validated.params.id);
+  res.status(204).send();
 }));
 
 /**

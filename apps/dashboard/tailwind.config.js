@@ -8,13 +8,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        sand: '#f7f1e8',
-        ink: '#14213d',
-        coral: '#e76f51',
-        sage: '#88a096'
+        sand: '#ffffff',
+        ink: '#1a1a1a',
+        coral: '#fcd34d',
+        sage: '#a4aebb'
       },
       boxShadow: {
-        panel: '0 18px 60px rgba(20, 33, 61, 0.12)'
+        panel: '0 10px 30px rgba(0, 0, 0, 0.03)'
       }
     }
   },

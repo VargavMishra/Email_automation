@@ -21,9 +21,16 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css"
+        />
+      </head>
       <body className={`${display.variable} ${body.variable}`}>
         {children}
       </body>
     </html>
   );
 }
+

@@ -57,3 +57,32 @@ export async function POST(request) {
 
   return successResponse;
 }
+
+export async function GET() {
+  const { session, response } = await getSessionOrResponse();
+
+  if (response) {
+    return response;
+  }
+
+  const result = await authenticatedBackendRequest({
+    path: '/api/studio/clients',
+    method: 'GET',
+    accessToken: session.accessToken
+  });
+
+  if (!result.response.ok) {
+    return NextResponse.json(
+      { message: result.payload?.error?.message ?? result.payload?.message ?? 'Unable to list clients.' },
+      { status: result.response.status }
+    );
+  }
+
+  const successResponse = NextResponse.json(result.payload);
+
+  if (session.refreshedTokens) {
+    persistAuthCookies(successResponse, session.refreshedTokens);
+  }
+
+  return successResponse;
+}

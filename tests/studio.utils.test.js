@@ -1,7 +1,7 @@
 import { computeBackoffDelayMs, getDeliveryEligibility, renderDeliveryTemplate } from '../src/modules/studio/studio.utils.js';
 
 describe('studio delivery eligibility', () => {
-  it('marks completed projects without follow-up requirements as eligible', () => {
+  it('marks completed projects without client check-in requirements as eligible', () => {
     const eligibility = getDeliveryEligibility({
       status: 'COMPLETED',
       requiresFollowUp: false,
@@ -14,7 +14,7 @@ describe('studio delivery eligibility', () => {
     expect(eligibility.reasons).toHaveLength(0);
   });
 
-  it('blocks delivery when follow-up is required and missing', () => {
+  it('blocks delivery when client check-in is required and missing', () => {
     const eligibility = getDeliveryEligibility({
       status: 'COMPLETED',
       requiresFollowUp: true,
@@ -24,7 +24,7 @@ describe('studio delivery eligibility', () => {
     });
 
     expect(eligibility.eligible).toBe(false);
-    expect(eligibility.reasons[0]).toMatch(/Follow-up/i);
+    expect(eligibility.reasons[0]).toMatch(/Client check-in/i);
   });
 });
 

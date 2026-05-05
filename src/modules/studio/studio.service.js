@@ -700,7 +700,7 @@ export async function updateStudioProject({ projectId, input, actorId }) {
       projectId,
       createdById: actorId,
       type: 'FOLLOW_UP_SENT',
-      message: 'Follow-up has been marked as sent.'
+      message: 'Client check-in has been marked as completed.'
     });
   }
 
@@ -1009,6 +1009,30 @@ export async function processDeliveryQueue() {
   }
 
   return results;
+}
+
+export async function deleteStudioProject(projectId) {
+  const existing = await prisma.studioProject.findUnique({
+    where: { id: projectId }
+  });
+
+  if (!existing) {
+    throw new AppError('Studio project not found.', 404);
+  }
+
+  // Use a transaction to ensure all related data is cleaned up
+  await prisma.$transaction([
+    prisma.deliveryDispatch.deleteMany({ where: { projectId } }),
+    prisma.deliveryEmailLog.deleteMany({ where: { projectId } }),
+    prisma.studioProjectActivity.deleteMany({ where: { projectId } }),
+    prisma.studioProject.delete({ where: { id: projectId } })
+  ]);
+
+  broadcastStudioEvent('project.deleted', {
+    projectId
+  });
+
+  return existing;
 }
 
 export async function trackEmailOpen(token) {

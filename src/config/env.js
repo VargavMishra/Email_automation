@@ -59,7 +59,7 @@ const envSchema = z.object({
   SLACK_WEBHOOK_URL: z.string().optional().default(''),
   WHATSAPP_WEBHOOK_URL: z.string().optional().default(''),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
-  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(200),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(500),
   LOG_LEVEL: z.string().default('info')
 });
 

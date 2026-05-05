@@ -10,6 +10,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "build": "prisma generate",
+    "postinstall": "prisma generate",
     "cli": "node bin/saas-builder.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

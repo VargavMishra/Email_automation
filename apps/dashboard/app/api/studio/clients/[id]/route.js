@@ -27,7 +27,7 @@ async function getSessionOrResponse() {
   return { session };
 }
 
-export async function POST(request) {
+export async function PATCH(request, { params }) {
   const { session, response } = await getSessionOrResponse();
 
   if (response) {
@@ -36,45 +36,15 @@ export async function POST(request) {
 
   const body = await request.json();
   const result = await authenticatedBackendRequest({
-    path: '/api/studio/projects',
-    method: 'POST',
+    path: `/api/studio/clients/${params.id}`,
+    method: 'PATCH',
     accessToken: session.accessToken,
     body
   });
 
   if (!result.response.ok) {
     return NextResponse.json(
-      { message: result.payload?.error?.message ?? result.payload?.message ?? 'Unable to create project.' },
-      { status: result.response.status }
-    );
-  }
-
-  const successResponse = NextResponse.json(result.payload, { status: 201 });
-
-  if (session.refreshedTokens) {
-    persistAuthCookies(successResponse, session.refreshedTokens);
-  }
-
-  return successResponse;
-}
-
-export async function GET(request) {
-  const { session, response } = await getSessionOrResponse();
-
-  if (response) {
-    return response;
-  }
-
-  const { searchParams } = new URL(request.url);
-  const result = await authenticatedBackendRequest({
-    path: `/api/studio/projects?${searchParams.toString()}`,
-    method: 'GET',
-    accessToken: session.accessToken
-  });
-
-  if (!result.response.ok) {
-    return NextResponse.json(
-      { message: result.payload?.error?.message ?? result.payload?.message ?? 'Unable to list projects.' },
+      { message: result.payload?.error?.message ?? result.payload?.message ?? 'Unable to update client.' },
       { status: result.response.status }
     );
   }

@@ -87,6 +87,13 @@ export function createClient(body) {
   });
 }
 
+export function updateClient(clientId, body) {
+  return request(`/api/studio/clients/${clientId}`, {
+    method: 'PATCH',
+    body
+  });
+}
+
 export function createProject(body) {
   return request('/api/studio/projects', {
     method: 'POST',
@@ -111,6 +118,18 @@ export function previewTemplate(params) {
   });
 
   return request(`/api/studio/templates/preview?${searchParams.toString()}`);
+}
+
+export function deleteClient(clientId) {
+  return request(`/api/studio/clients/${clientId}`, {
+    method: 'DELETE'
+  });
+}
+
+export function deleteProject(projectId) {
+  return request(`/api/studio/projects/${projectId}`, {
+    method: 'DELETE'
+  });
 }
 
 export function manualSendProject(projectId, body) {
