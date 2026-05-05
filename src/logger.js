@@ -9,7 +9,7 @@ export const logger = winston.createLogger({
     winston.format.json()
   ),
   defaultMeta: {
-    service: 'saas-builder'
+    service: 'photo-studio-automation'
   },
   transports: [
     new winston.transports.Console({

@@ -21,7 +21,15 @@ export function createApp() {
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN, credentials: true }));
-  app.use(compression());
+  app.use(compression({
+    filter: (req, res) => {
+      if (req.path === '/api/studio/events') {
+        return false;
+      }
+
+      return compression.filter(req, res);
+    }
+  }));
   app.use(express.json({ limit: '2mb' }));
   app.use(cookieParser());
   app.use(passport.initialize());
@@ -33,7 +41,7 @@ export function createApp() {
   }));
 
   app.get('/health', (_req, res) => {
-    res.json({ ok: true, service: 'saas-builder' });
+    res.json({ ok: true, service: 'photo-studio-automation' });
   });
 
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

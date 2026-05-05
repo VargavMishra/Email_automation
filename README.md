@@ -1,52 +1,84 @@
-# SaaS Backend Boilerplate Generator
+# Photo Studio Delivery Automation
 
-This repo contains a JavaScript Node.js/Express generator service that creates production-ready SaaS backend projects as downloadable ZIP files.
+Production-oriented automation system for an e-commerce photography studio. The platform watches project readiness, validates Google Drive delivery folders, sends personalized delivery emails, tracks opens and clicks, retries failures, and gives studio staff a Next.js admin dashboard for overrides.
 
-## What It Generates
+## What Is Included
 
-- Express API with secure defaults
-- PostgreSQL + Prisma
-- JWT auth, refresh tokens, Google OAuth, and reset-password email
-- Role-based access control
-- Razorpay or mock payments
-- Free and Pro subscription plans
-- Dynamic CRUD APIs with Zod validation
-- Swagger docs, Winston logging, rate limiting, Docker, and environment files
+- Express API with authenticated studio admin routes
+- Prisma + MongoDB data model for clients, projects, dispatch queue, logs, and activity history
+- Event-driven delivery automation with reconciliation polling
+- Google Drive validation hooks
+- SMTP, Gmail OAuth2, or Resend delivery support
+- Open/click tracking routes
+- Slack and WhatsApp failure alert hooks
+- Next.js + Tailwind admin dashboard scaffold
+- Docker Compose and GitHub Actions CI
 
-## Local Setup
+## Quick Start
+
+1. Start MongoDB locally, or update `DATABASE_URL` in `.env` to a MongoDB Atlas connection string.
+
+2. Install and prepare the backend:
 
 ```bash
 npm install
-cp .env.example .env
-npx prisma migrate dev
+npx prisma generate
+npx prisma db push
 npm run dev
 ```
 
-The API runs on `http://localhost:4000` and Swagger docs are available at `/docs`.
+Backend URLs:
 
-## CLI
+- `http://localhost:4500/health`
+- `http://localhost:4500/docs`
+
+3. Start the dashboard in a second terminal:
 
 ```bash
-npx saas-builder create-app
+cd apps/dashboard
+npm install
+npm run dev
 ```
 
-The CLI uses the same generator engine as the API.
+Dashboard URL:
 
-## Main API
+- `http://localhost:3000/login`
 
-- `GET /api/features`
-- `POST /api/auth/signup`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- `POST /api/generate`
-- `POST /api/projects`
-- `GET /api/projects/:id/download`
-- `POST /api/payments/orders`
-- `POST /api/payments/verify`
-- `POST /api/payments/mock/success`
-- `PATCH /api/payments/subscription`
+## Dashboard Login
 
-Generation and project download routes require a valid access token.
+The dashboard now uses live authenticated requests instead of demo fallback data.
+
+1. Create an admin user through the backend:
+
+```bash
+curl -X POST http://localhost:4500/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"Admin\",\"email\":\"you@example.com\",\"password\":\"StrongPass123!\"}"
+```
+
+2. Open the dashboard at `http://localhost:3000/login`
+3. Sign in with the same email and password
+4. The dashboard will then load real `/api/studio/*` data from the backend
+
+## Main Backend Routes
+
+- `GET /api/studio/overview`
+- `GET /api/studio/clients`
+- `POST /api/studio/clients`
+- `GET /api/studio/projects`
+- `POST /api/studio/projects`
+- `PATCH /api/studio/projects/:id`
+- `POST /api/studio/projects/:id/manual-send`
+- `GET /api/studio/logs`
+- `GET /api/studio/tracking/open/:token`
+- `GET /api/studio/tracking/click/:token`
+
+## Deployment
+
+```bash
+docker compose up --build
+```
+
+## Documentation
+
+- [Architecture, schema, API map, templates, and deployment guide](/C:/Users/Sanjay%20Mishra/Documents/New%20project/docs/photo-studio-automation.md)

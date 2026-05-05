@@ -37,9 +37,9 @@ async function sendMail(message) {
 export async function sendWelcomeEmail(user) {
   return sendMail({
     to: user.email,
-    subject: 'Welcome to SaaS Builder',
-    text: `Hi ${user.name ?? 'there'}, welcome to SaaS Builder.`,
-    html: `<p>Hi ${user.name ?? 'there'},</p><p>Welcome to SaaS Builder.</p>`
+    subject: 'Welcome to Studio Delivery Console',
+    text: `Hi ${user.name ?? 'there'}, welcome to Studio Delivery Console.`,
+    html: `<p>Hi ${user.name ?? 'there'},</p><p>Welcome to Studio Delivery Console.</p>`
   });
 }
 
@@ -48,7 +48,7 @@ export async function sendPasswordResetEmail(user, token) {
 
   return sendMail({
     to: user.email,
-    subject: 'Reset your SaaS Builder password',
+    subject: 'Reset your Studio Delivery Console password',
     text: `Reset your password: ${url}`,
     html: `<p>Use this link to reset your password. It expires in ${env.PASSWORD_RESET_TTL_MINUTES} minutes.</p><p><a href="${url}">Reset password</a></p>`
   });
