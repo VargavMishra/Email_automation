@@ -296,51 +296,52 @@ async function sendDeliveryAttempt({
     throw driveError;
   }
 
-  const openTrackingToken = randomBytes(18).toString('hex');
-  const clickTrackingToken = randomBytes(18).toString('hex');
-  const rendered = renderDeliveryTemplate({
-    project: {
-      ...project,
-      driveFolderLink: driveValidation.webViewLink ?? project.driveFolderLink
-    },
-    tone: overrides.tone ?? project.deliveryTemplateTone,
-    subjectOverride: overrides.subject,
-    messageOverride: overrides.message,
-    includeRevisionCta: overrides.includeRevisionCta ?? true,
-    includeFeedbackCta: overrides.includeFeedbackCta ?? true,
-    appUrl: env.APP_URL,
-    openTrackingToken,
-    clickTrackingToken
-  });
-
-  const logEntry = await prisma.deliveryEmailLog.create({
-    data: {
-      projectId: project.id,
-      clientId: project.clientId,
-      dispatchId: dispatch.id,
-      recipientEmail: project.client.email,
-      subject: rendered.subject,
-      htmlSnapshot: rendered.html,
-      textSnapshot: rendered.text,
-      tone: rendered.tone,
-      sendMode: mode,
-      provider: env.EMAIL_PROVIDER,
-      status: 'QUEUED',
+  let logEntry;
+  try {
+    const openTrackingToken = randomBytes(18).toString('hex');
+    const clickTrackingToken = randomBytes(18).toString('hex');
+    const rendered = renderDeliveryTemplate({
+      project: {
+        ...project,
+        driveFolderLink: driveValidation.webViewLink ?? project.driveFolderLink
+      },
+      tone: overrides.tone ?? project.deliveryTemplateTone,
+      subjectOverride: overrides.subject,
+      messageOverride: overrides.message,
+      includeRevisionCta: overrides.includeRevisionCta ?? true,
+      includeFeedbackCta: overrides.includeFeedbackCta ?? true,
+      appUrl: env.APP_URL,
       openTrackingToken,
       clickTrackingToken
-    }
-  });
+    });
 
-  broadcastStudioEvent('delivery.queued', {
-    projectId: project.id,
-    projectCode: project.projectCode,
-    dispatchId: dispatch.id,
-    logId: logEntry.id,
-    sendMode: mode,
-    recipientEmail: project.client.email
-  });
+    logEntry = await prisma.deliveryEmailLog.create({
+      data: {
+        projectId: project.id,
+        clientId: project.clientId,
+        dispatchId: dispatch.id,
+        recipientEmail: project.client.email,
+        subject: rendered.subject,
+        htmlSnapshot: rendered.html,
+        textSnapshot: rendered.text,
+        tone: rendered.tone,
+        sendMode: mode,
+        provider: env.EMAIL_PROVIDER,
+        status: 'QUEUED',
+        openTrackingToken,
+        clickTrackingToken
+      }
+    });
 
-  try {
+    broadcastStudioEvent('delivery.queued', {
+      projectId: project.id,
+      projectCode: project.projectCode,
+      dispatchId: dispatch.id,
+      logId: logEntry.id,
+      sendMode: mode,
+      recipientEmail: project.client.email
+    });
+
     const result = await sendStudioEmail({
       to: project.client.email,
       subject: rendered.subject,
@@ -415,7 +416,7 @@ async function sendDeliveryAttempt({
       dispatch,
       project,
       error,
-      logId: logEntry.id
+      logId: logEntry?.id
     });
 
     throw error;

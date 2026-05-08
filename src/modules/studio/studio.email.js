@@ -10,6 +10,9 @@ function createTransport() {
 
     return nodemailer.createTransport({
       service: 'gmail',
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 15000,
       auth: {
         type: 'OAuth2',
         user: env.GMAIL_USER,
@@ -29,6 +32,9 @@ function createTransport() {
     host: env.SMTP_HOST,
     port: env.SMTP_PORT,
     secure: env.SMTP_SECURE,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 15000,
     auth: env.SMTP_USER
       ? {
           user: env.SMTP_USER,
@@ -51,6 +57,7 @@ async function sendViaResend(message) {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json'
     },
+    signal: AbortSignal.timeout(15000),
     body: JSON.stringify({
       from: env.EMAIL_FROM,
       to: Array.isArray(message.to) ? message.to : [message.to],

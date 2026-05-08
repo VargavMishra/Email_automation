@@ -6,7 +6,8 @@ async function driveRequest(path) {
   const response = await fetch(`${env.GOOGLE_DRIVE_API_BASE_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${env.GOOGLE_DRIVE_ACCESS_TOKEN}`
-    }
+    },
+    signal: AbortSignal.timeout(15000)
   });
 
   if (!response.ok) {
