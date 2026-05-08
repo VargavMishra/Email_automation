@@ -57,3 +57,32 @@ export async function PATCH(request, { params }) {
 
   return successResponse;
 }
+
+export async function DELETE(request, { params }) {
+  const { session, response } = await getSessionOrResponse();
+
+  if (response) {
+    return response;
+  }
+
+  const result = await authenticatedBackendRequest({
+    path: `/api/studio/projects/${params.id}`,
+    method: 'DELETE',
+    accessToken: session.accessToken
+  });
+
+  if (!result.response.ok) {
+    return NextResponse.json(
+      { message: result.payload?.error?.message ?? result.payload?.message ?? 'Unable to delete project.' },
+      { status: result.response.status }
+    );
+  }
+
+  const successResponse = new NextResponse(null, { status: 204 });
+
+  if (session.refreshedTokens) {
+    persistAuthCookies(successResponse, session.refreshedTokens);
+  }
+
+  return successResponse;
+}
