@@ -2,16 +2,33 @@ import nodemailer from 'nodemailer';
 import { env } from '../config/env.js';
 import { logger } from '../logger.js';
 
+const SMTP_TIMEOUT_MS = 20000;
+
 function createTransport() {
   if (!env.SMTP_HOST) {
     return null;
   }
 
+  const isBrevo = env.SMTP_HOST.toLowerCase().includes('brevo.com');
+  const shouldRequireTls = env.SMTP_REQUIRE_TLS || isBrevo;
+  const authEnabled = Boolean(env.SMTP_USER);
+
   return nodemailer.createTransport({
     host: env.SMTP_HOST,
     port: env.SMTP_PORT,
     secure: env.SMTP_SECURE,
-    auth: env.SMTP_USER
+    requireTLS: shouldRequireTls,
+    pool: env.SMTP_POOL,
+    maxConnections: env.SMTP_MAX_CONNECTIONS,
+    maxMessages: env.SMTP_MAX_MESSAGES,
+    connectionTimeout: SMTP_TIMEOUT_MS,
+    greetingTimeout: SMTP_TIMEOUT_MS,
+    socketTimeout: SMTP_TIMEOUT_MS,
+    tls: {
+      minVersion: 'TLSv1.2',
+      servername: env.SMTP_HOST
+    },
+    auth: authEnabled
       ? {
           user: env.SMTP_USER,
           pass: env.SMTP_PASS
@@ -28,10 +45,31 @@ async function sendMail(message) {
     return { skipped: true };
   }
 
-  return transport.sendMail({
-    from: env.EMAIL_FROM,
-    ...message
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('SMTP send timeout exceeded.')), SMTP_TIMEOUT_MS);
   });
+
+  try {
+    return await Promise.race([
+      transport.sendMail({
+        from: env.EMAIL_FROM,
+        ...message
+      }),
+      timeoutPromise
+    ]);
+  } catch (error) {
+    logger.error('Failed to send email.', {
+      to: message.to,
+      subject: message.subject,
+      error: error.message,
+      provider: env.EMAIL_PROVIDER,
+      host: env.SMTP_HOST
+    });
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function sendWelcomeEmail(user) {
