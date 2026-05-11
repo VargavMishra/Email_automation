@@ -26,7 +26,12 @@ export async function POST(request, { params }) {
     return response;
   }
 
-  const body = await request.json();
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
   const result = await authenticatedBackendRequest({
     path: `/api/studio/projects/${params.id}/manual-send`,
     method: 'POST',

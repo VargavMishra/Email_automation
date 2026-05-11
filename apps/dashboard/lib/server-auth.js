@@ -16,31 +16,47 @@ function cookieOptions(maxAge) {
 }
 
 async function backendRequest(path, options = {}) {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    method: options.method ?? 'GET',
-    headers: {
-      Accept: 'application/json',
-      ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...(options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {})
-    },
-    cache: 'no-store',
-    body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  });
-  const text = await response.text();
-  let payload = null;
+  try {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
+      method: options.method ?? 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {})
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20000),
+      body: options.body === undefined ? undefined : JSON.stringify(options.body)
+    });
+    const text = await response.text();
+    let payload = null;
 
-  if (text) {
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      payload = { message: text };
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = { message: text };
+      }
     }
-  }
 
-  return {
-    response,
-    payload
-  };
+    return {
+      response,
+      payload
+    };
+  } catch (error) {
+    const isTimeoutError = error?.name === 'TimeoutError';
+    return {
+      response: {
+        ok: false,
+        status: isTimeoutError ? 504 : 502
+      },
+      payload: {
+        message: isTimeoutError
+          ? 'Backend request timed out. Please check Render logs and email provider settings.'
+          : 'Backend request failed. Please verify API_BASE_URL and network connectivity.'
+      }
+    };
+  }
 }
 
 async function fetchCurrentUser(accessToken) {

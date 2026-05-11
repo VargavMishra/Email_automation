@@ -59,7 +59,10 @@ export function ProjectTable({
               const isSending = project.id === sendingProjectId;
               const followUpSatisfied = !project.requiresFollowUp || Boolean(project.followUpSentAt);
               const isEligible = project.status === 'COMPLETED' && followUpSatisfied;
-              const isProcessing = project.dispatch?.status === 'PROCESSING';
+              const lockTimestamp = project.dispatch?.lockedAt ? new Date(project.dispatch.lockedAt).getTime() : 0;
+              const lockIsFresh = lockTimestamp > Date.now() - (2 * 60 * 1000);
+              const isProcessing = project.dispatch?.status === 'PROCESSING' && lockIsFresh;
+              const hasStaleProcessingLock = project.dispatch?.status === 'PROCESSING' && !lockIsFresh;
               const sendDisabled = project.deliveryEmailSent || isSending || isProcessing || !isEligible;
               const deliveryLabel = project.deliveryEmailSent
                 ? 'Sent'
@@ -77,6 +80,8 @@ export function ProjectTable({
                 ? 'Already Sent'
                 : isSending || isProcessing
                   ? 'Processing...'
+                  : hasStaleProcessingLock
+                    ? 'Retry Send'
                   : !followUpSatisfied
                     ? 'Check-in Needed'
                     : project.status !== 'COMPLETED'

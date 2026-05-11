@@ -6,16 +6,27 @@ function buildError(message, status, payload) {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(path, {
-    method: options.method ?? 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {})
-    },
-    credentials: 'same-origin',
-    cache: 'no-store',
-    body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  });
+  let response;
+  try {
+    response = await fetch(path, {
+      method: options.method ?? 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers ?? {})
+      },
+      credentials: 'same-origin',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20000),
+      body: options.body === undefined ? undefined : JSON.stringify(options.body)
+    });
+  } catch (error) {
+    if (error?.name === 'TimeoutError') {
+      throw buildError('Request timed out while waiting for backend email processing.', 504);
+    }
+
+    throw buildError('Network error while reaching the backend API.', 502);
+  }
+
   const text = await response.text();
   let payload = null;
 
