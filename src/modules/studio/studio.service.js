@@ -261,6 +261,7 @@ async function sendDeliveryAttempt({
   actorId
 }) {
   let logEntry;
+  let attemptError = null;
   try {
     const eligibility = getDeliveryEligibility(project);
 
@@ -409,18 +410,52 @@ async function sendDeliveryAttempt({
       deliverySentAt: sentAt
     };
   } catch (error) {
+    attemptError = error;
+
     if (error instanceof AppError && error.message === getDeliveryEligibility(project).reasons.join(' ')) {
       throw error;
     }
-    
-    await markDispatchFailure({
-      dispatch,
-      project,
-      error,
-      logId: logEntry?.id
-    });
+
+    try {
+      await markDispatchFailure({
+        dispatch,
+        project,
+        error,
+        logId: logEntry?.id
+      });
+    } catch (markError) {
+      logger.error(`Failed to mark dispatch failure for project ${project.id}`, {
+        dispatchId: dispatch?.id,
+        error: markError.message,
+        originalError: error.message
+      });
+    }
 
     throw error;
+  } finally {
+    if (!attemptError || !dispatch?.id) {
+      return;
+    }
+
+    try {
+      const currentDispatch = await prisma.deliveryDispatch.findUnique({
+        where: { id: dispatch.id },
+        select: { status: true }
+      });
+
+      if (currentDispatch?.status === 'PROCESSING') {
+        await releaseDispatch(dispatch.id, {
+          status: 'RETRYABLE',
+          attempts: dispatch.attempts + 1,
+          nextAttemptAt: getNextAttemptDate(dispatch.attempts + 1),
+          lastError: attemptError instanceof Error ? attemptError.message : String(attemptError)
+        });
+      }
+    } catch (releaseError) {
+      logger.error(`Emergency release failed for dispatch ${dispatch.id}`, {
+        error: releaseError.message
+      });
+    }
   }
 }
 
