@@ -76,6 +76,9 @@ export function ProjectTable({
                 : !followUpSatisfied
                   ? 'Waiting client check-in'
                   : project.dispatch?.status ?? 'Not queued';
+              const deliveryError = project.dispatch?.lastError
+                ? String(project.dispatch.lastError).slice(0, 120)
+                : '';
               const sendLabel = project.deliveryEmailSent
                 ? 'Already Sent'
                 : isSending || isProcessing
@@ -116,6 +119,11 @@ export function ProjectTable({
                     <p className="mt-1 text-xs text-ink/55">
                       {deliveryState}
                     </p>
+                    {deliveryError ? (
+                      <p className="mt-1 text-xs text-coral/80" title={project.dispatch?.lastError}>
+                        {deliveryError}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex flex-wrap gap-2">

@@ -1,4 +1,5 @@
 const apiBaseUrl = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4500';
+const BACKEND_REQUEST_TIMEOUT_MS = 60000;
 
 export const authCookieNames = {
   access: 'studio_access_token',
@@ -25,7 +26,7 @@ async function backendRequest(path, options = {}) {
         ...(options.accessToken ? { Authorization: `Bearer ${options.accessToken}` } : {})
       },
       cache: 'no-store',
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(BACKEND_REQUEST_TIMEOUT_MS),
       body: options.body === undefined ? undefined : JSON.stringify(options.body)
     });
     const text = await response.text();

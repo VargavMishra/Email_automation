@@ -5,6 +5,8 @@ function buildError(message, status, payload) {
   return error;
 }
 
+const API_REQUEST_TIMEOUT_MS = 60000;
+
 async function request(path, options = {}) {
   let response;
   try {
@@ -16,7 +18,7 @@ async function request(path, options = {}) {
       },
       credentials: 'same-origin',
       cache: 'no-store',
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(API_REQUEST_TIMEOUT_MS),
       body: options.body === undefined ? undefined : JSON.stringify(options.body)
     });
   } catch (error) {
