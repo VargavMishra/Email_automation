@@ -1010,12 +1010,20 @@ export async function processDeliveryQueue() {
         stack: error.stack
       });
 
-      // Try to release it if we can
+      // sendDeliveryAttempt already records attempts/status on failure.
+      // Only force-release if the dispatch is still stuck in PROCESSING.
       try {
-        await releaseDispatch(dispatch.id, {
-          status: 'RETRYABLE',
-          lastError: error.message
+        const currentDispatch = await prisma.deliveryDispatch.findUnique({
+          where: { id: dispatch.id },
+          select: { status: true }
         });
+
+        if (currentDispatch?.status === 'PROCESSING') {
+          await releaseDispatch(dispatch.id, {
+            status: 'RETRYABLE',
+            lastError: error.message
+          });
+        }
       } catch (releaseError) {
         logger.error(`Failed to release stuck dispatch ${dispatch.id}`, {
           error: releaseError.message
