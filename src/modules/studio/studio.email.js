@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 
-const SMTP_TIMEOUT_MS = 20000;
+const SMTP_TIMEOUT_MS = env.SMTP_SEND_TIMEOUT_MS;
 
 function createTransport() {
   if (env.EMAIL_PROVIDER === 'gmail') {
@@ -64,6 +64,61 @@ function createTransport() {
 
 const transport = createTransport();
 
+function isBrevoPrimarySmtp() {
+  return env.EMAIL_PROVIDER === 'smtp'
+    && env.SMTP_HOST.toLowerCase().includes('brevo.com')
+    && env.SMTP_PORT === 587
+    && env.SMTP_SECURE === false;
+}
+
+function createBrevoSslFallbackTransport() {
+  return nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: 465,
+    secure: true,
+    requireTLS: false,
+    pool: false,
+    connectionTimeout: SMTP_TIMEOUT_MS,
+    greetingTimeout: SMTP_TIMEOUT_MS,
+    socketTimeout: SMTP_TIMEOUT_MS,
+    tls: {
+      minVersion: 'TLSv1.2',
+      servername: env.SMTP_HOST
+    },
+    auth: env.SMTP_USER
+      ? {
+          user: env.SMTP_USER,
+          pass: env.SMTP_PASS
+        }
+      : undefined
+  });
+}
+
+async function sendWithTransport(activeTransport, message) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new AppError('SMTP send timeout exceeded.', 504)), SMTP_TIMEOUT_MS);
+  });
+
+  try {
+    const info = await Promise.race([
+      activeTransport.sendMail({
+        from: env.EMAIL_FROM,
+        ...message
+      }),
+      timeoutPromise
+    ]);
+
+    return {
+      provider: env.EMAIL_PROVIDER,
+      messageId: info.messageId,
+      response: info.response
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function sendViaResend(message) {
   if (!env.RESEND_API_KEY) {
     throw new AppError('RESEND_API_KEY is required when EMAIL_PROVIDER=resend.', 503);
@@ -109,29 +164,30 @@ export async function sendStudioEmail(message) {
     throw new AppError('SMTP or Gmail email transport is not configured.', 503);
   }
 
-  let timeoutId;
-  const timeoutPromise = new Promise((_, reject) => {
-    timeoutId = setTimeout(() => reject(new AppError('SMTP send timeout exceeded.', 504)), SMTP_TIMEOUT_MS);
-  });
-
   try {
-    const info = await Promise.race([
-      transport.sendMail({
-        from: env.EMAIL_FROM,
-        ...message
-      }),
-      timeoutPromise
-    ]);
-
-    clearTimeout(timeoutId);
-
-    return {
-      provider: env.EMAIL_PROVIDER,
-      messageId: info.messageId,
-      response: info.response
-    };
+    return await sendWithTransport(transport, message);
   } catch (error) {
-    clearTimeout(timeoutId);
+    if (
+      error instanceof AppError
+      && error.message === 'SMTP send timeout exceeded.'
+      && isBrevoPrimarySmtp()
+    ) {
+      try {
+        const fallbackTransport = createBrevoSslFallbackTransport();
+        return await sendWithTransport(fallbackTransport, message);
+      } catch (fallbackError) {
+        if (fallbackError instanceof AppError) {
+          throw fallbackError;
+        }
+
+        throw new AppError(`SMTP send failed after Brevo fallback: ${fallbackError.message}`, 502, {
+          provider: env.EMAIL_PROVIDER,
+          host: env.SMTP_HOST,
+          fallbackPort: 465
+        });
+      }
+    }
+
     if (error instanceof AppError) {
       throw error;
     }

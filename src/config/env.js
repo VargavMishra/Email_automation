@@ -37,6 +37,7 @@ const envSchema = z.object({
   SMTP_POOL: booleanFromString(true),
   SMTP_MAX_CONNECTIONS: z.coerce.number().int().positive().default(3),
   SMTP_MAX_MESSAGES: z.coerce.number().int().positive().default(100),
+  SMTP_SEND_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
   SMTP_USER: z.string().optional().default(''),
   SMTP_PASS: z.string().optional().default(''),
   EMAIL_PROVIDER: z.enum(['smtp', 'gmail', 'resend']).default('smtp'),
