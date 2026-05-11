@@ -542,6 +542,43 @@ export function OperationsPanel({
               )}
             </div>
           </div>
+
+          <div className="h-px bg-zinc-200/50 w-full" />
+
+          {/* Delete Client */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-coral">Option 3: Delete Client</h3>
+            <p className="text-xs text-ink/50 leading-relaxed">
+              Permanently removes the client and all their associated projects and delivery history. This cannot be undone.
+            </p>
+            <Field label="Select Client to Delete">
+              <select className={inputClass()} value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)}>
+                <option value="" disabled>Select client</option>
+                {clients.map((c) => (<option key={c.id} value={c.id}>{c.brandName} — {c.name}</option>))}
+              </select>
+            </Field>
+            {selectedClientId && (
+              <div className="flex items-center gap-4 p-4 glass-inner rounded-xl border border-coral/20">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800">
+                    {clients.find((c) => c.id === selectedClientId)?.brandName}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {projects.filter((p) => p.clientId === selectedClientId).length} project(s) will also be deleted
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => onDeleteClient(selectedClientId)}
+                  className="flex items-center gap-2 bg-coral text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:brightness-110 transition disabled:opacity-50 shrink-0"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  {isSaving ? 'Deleting...' : 'Delete Client'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
