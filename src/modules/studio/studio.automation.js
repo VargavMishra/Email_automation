@@ -32,10 +32,7 @@ async function runWorker() {
   workerRunning = true;
 
   try {
-    const result = await Promise.race([
-      processDeliveryQueue(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Worker cycle timed out')), 45000))
-    ]);
+    const result = await processDeliveryQueue();
     logger.info('Studio worker cycle completed', { processed: result.length });
   } catch (error) {
     logger.error('Studio worker cycle failed', { error: error.message });
