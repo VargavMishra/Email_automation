@@ -260,45 +260,39 @@ async function sendDeliveryAttempt({
   force = false,
   actorId
 }) {
-  const eligibility = getDeliveryEligibility(project);
-
-  if (!force && !eligibility.eligible) {
-    await releaseDispatch(dispatch.id, {
-      status: 'SKIPPED',
-      lastError: eligibility.reasons.join(' ')
-    });
-
-    broadcastStudioEvent('delivery.skipped', {
-      projectId: project.id,
-      projectCode: project.projectCode,
-      dispatchId: dispatch.id,
-      reasons: eligibility.reasons
-    });
-
-    throw new AppError(eligibility.reasons.join(' '), 409, eligibility);
-  }
-
-  const driveValidation = await syncDriveMetadata(project);
-  logger.info(`Drive validation completed for project ${project.id}`);
-
-  if (!getDriveReadyState(driveValidation)) {
-    const driveError = new AppError(
-      driveValidation.reason ?? 'Google Drive link is not ready for delivery.',
-      409,
-      driveValidation
-    );
-
-    await markDispatchFailure({
-      dispatch,
-      project,
-      error: driveError
-    });
-
-    throw driveError;
-  }
-
   let logEntry;
   try {
+    const eligibility = getDeliveryEligibility(project);
+
+    if (!force && !eligibility.eligible) {
+      await releaseDispatch(dispatch.id, {
+        status: 'SKIPPED',
+        lastError: eligibility.reasons.join(' ')
+      });
+
+      broadcastStudioEvent('delivery.skipped', {
+        projectId: project.id,
+        projectCode: project.projectCode,
+        dispatchId: dispatch.id,
+        reasons: eligibility.reasons
+      });
+
+      throw new AppError(eligibility.reasons.join(' '), 409, eligibility);
+    }
+
+    const driveValidation = await syncDriveMetadata(project);
+    logger.info(`Drive validation completed for project ${project.id}`);
+
+    if (!getDriveReadyState(driveValidation)) {
+      const driveError = new AppError(
+        driveValidation.reason ?? 'Google Drive link is not ready for delivery.',
+        409,
+        driveValidation
+      );
+
+      throw driveError;
+    }
+
     const openTrackingToken = randomBytes(18).toString('hex');
     const clickTrackingToken = randomBytes(18).toString('hex');
     const rendered = renderDeliveryTemplate({
@@ -415,6 +409,10 @@ async function sendDeliveryAttempt({
       deliverySentAt: sentAt
     };
   } catch (error) {
+    if (error instanceof AppError && error.message === getDeliveryEligibility(project).reasons.join(' ')) {
+      throw error;
+    }
+    
     await markDispatchFailure({
       dispatch,
       project,
@@ -955,42 +953,44 @@ export async function processDeliveryQueue() {
   const results = [];
 
   for (const dispatch of dueDispatches) {
-    logger.info(`Claiming dispatch ${dispatch.id}`);
-    const claimed = await claimDispatch(dispatch.id, 'automation-worker');
-
-    if (!claimed) {
-      logger.info(`Failed to claim dispatch ${dispatch.id}`);
-      continue;
-    }
-
-    const latestDispatch = await prisma.deliveryDispatch.findUnique({
-      where: { id: dispatch.id }
-    });
-    const latestProject = await getStudioProjectOrThrow(dispatch.projectId);
-    const eligibility = getDeliveryEligibility(latestProject);
-
-    if (!eligibility.eligible) {
-      await releaseDispatch(dispatch.id, {
-        status: latestProject.deliveryEmailSent ? 'SENT' : 'SKIPPED',
-        lastError: eligibility.reasons.join(' ')
-      });
-
-      broadcastStudioEvent('delivery.skipped', {
-        projectId: latestProject.id,
-        projectCode: latestProject.projectCode,
-        dispatchId: dispatch.id,
-        reasons: eligibility.reasons
-      });
-
-      results.push({
-        projectId: latestProject.id,
-        skipped: true
-      });
-
-      continue;
-    }
-
     try {
+      logger.info(`Claiming dispatch ${dispatch.id}`);
+      const claimed = await claimDispatch(dispatch.id, 'automation-worker');
+
+      if (!claimed) {
+        logger.info(`Failed to claim dispatch ${dispatch.id}`);
+        continue;
+      }
+
+      const latestDispatch = await prisma.deliveryDispatch.findUnique({
+        where: { id: dispatch.id }
+      });
+      const latestProject = await getStudioProjectOrThrow(dispatch.projectId);
+      
+      const eligibility = getDeliveryEligibility(latestProject);
+
+      if (!eligibility.eligible) {
+        await releaseDispatch(dispatch.id, {
+          status: latestProject.deliveryEmailSent ? 'SENT' : 'SKIPPED',
+          lastError: eligibility.reasons.join(' ')
+        });
+
+        broadcastStudioEvent('delivery.skipped', {
+          projectId: latestProject.id,
+          projectCode: latestProject.projectCode,
+          dispatchId: dispatch.id,
+          reasons: eligibility.reasons
+        });
+
+        results.push({
+          projectId: latestProject.id,
+          skipped: true,
+          reasons: eligibility.reasons
+        });
+
+        continue;
+      }
+
       logger.info(`Sending delivery attempt for project ${latestProject.id}`);
       const result = await sendDeliveryAttempt({
         project: latestProject,
@@ -1005,15 +1005,25 @@ export async function processDeliveryQueue() {
         logId: result.logId
       });
     } catch (error) {
-      logger.error('Automated studio delivery failed', {
-        projectId: latestProject.id,
-        projectCode: latestProject.projectCode,
+      logger.error(`Automated studio delivery failed for dispatch ${dispatch.id}`, {
         error: error.message,
         stack: error.stack
       });
 
+      // Try to release it if we can
+      try {
+        await releaseDispatch(dispatch.id, {
+          status: 'RETRYABLE',
+          lastError: error.message
+        });
+      } catch (releaseError) {
+        logger.error(`Failed to release stuck dispatch ${dispatch.id}`, {
+          error: releaseError.message
+        });
+      }
+
       results.push({
-        projectId: latestProject.id,
+        dispatchId: dispatch.id,
         sent: false,
         error: error.message
       });
