@@ -16,7 +16,7 @@ import {
   renderDeliveryTemplate
 } from './studio.utils.js';
 
-const staleLockThresholdMs = 10 * 60 * 1000;
+const staleLockThresholdMs = 2 * 60 * 1000;
 
 function buildProjectQuery(filters = {}) {
   const where = {};
@@ -279,6 +279,7 @@ async function sendDeliveryAttempt({
   }
 
   const driveValidation = await syncDriveMetadata(project);
+  logger.info(`Drive validation completed for project ${project.id}`);
 
   if (!getDriveReadyState(driveValidation)) {
     const driveError = new AppError(
@@ -342,6 +343,7 @@ async function sendDeliveryAttempt({
       recipientEmail: project.client.email
     });
 
+    logger.info(`Calling sendStudioEmail for project ${project.id}`);
     const result = await sendStudioEmail({
       to: project.client.email,
       subject: rendered.subject,
@@ -352,6 +354,7 @@ async function sendDeliveryAttempt({
         'X-Dispatch-Mode': mode
       }
     });
+    logger.info(`Finished sendStudioEmail for project ${project.id}`);
     const sentAt = new Date();
 
     await prisma.deliveryEmailLog.update({
@@ -912,6 +915,7 @@ export async function reconcileEligibleProjects() {
 }
 
 export async function processDeliveryQueue() {
+  logger.info('Starting processDeliveryQueue');
   const now = new Date();
   const staleCutoff = new Date(Date.now() - staleLockThresholdMs);
   const dueDispatches = await prisma.deliveryDispatch.findMany({
@@ -946,12 +950,16 @@ export async function processDeliveryQueue() {
     take: env.STUDIO_DELIVERY_BATCH_SIZE
   });
 
+  logger.info(`Found ${dueDispatches.length} due dispatches`);
+
   const results = [];
 
   for (const dispatch of dueDispatches) {
+    logger.info(`Claiming dispatch ${dispatch.id}`);
     const claimed = await claimDispatch(dispatch.id, 'automation-worker');
 
     if (!claimed) {
+      logger.info(`Failed to claim dispatch ${dispatch.id}`);
       continue;
     }
 
@@ -983,11 +991,13 @@ export async function processDeliveryQueue() {
     }
 
     try {
+      logger.info(`Sending delivery attempt for project ${latestProject.id}`);
       const result = await sendDeliveryAttempt({
         project: latestProject,
         dispatch: latestDispatch,
         mode: 'AUTOMATED'
       });
+      logger.info(`Successfully sent delivery attempt for project ${latestProject.id}`);
 
       results.push({
         projectId: latestProject.id,
@@ -998,7 +1008,8 @@ export async function processDeliveryQueue() {
       logger.error('Automated studio delivery failed', {
         projectId: latestProject.id,
         projectCode: latestProject.projectCode,
-        error: error.message
+        error: error.message,
+        stack: error.stack
       });
 
       results.push({

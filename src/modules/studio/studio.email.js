@@ -91,10 +91,13 @@ export async function sendStudioEmail(message) {
     throw new AppError('SMTP or Gmail email transport is not configured.', 503);
   }
 
-  const info = await transport.sendMail({
-    from: env.EMAIL_FROM,
-    ...message
-  });
+  const info = await Promise.race([
+    transport.sendMail({
+      from: env.EMAIL_FROM,
+      ...message
+    }),
+    new Promise((_, reject) => setTimeout(() => reject(new AppError('SMTP send timeout exceeded.', 504)), 15000))
+  ]);
 
   return {
     provider: env.EMAIL_PROVIDER,
