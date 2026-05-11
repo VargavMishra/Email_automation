@@ -15,7 +15,10 @@ const body = Manrope({
 
 export const metadata = {
   title: 'Studio Delivery Console',
-  description: 'Admin dashboard for photo delivery automation.'
+  description: 'Admin dashboard for photo delivery automation.',
+  icons: {
+    icon: '/pics/favicon.ico'
+  }
 };
 
 export default function RootLayout({ children }) {
