@@ -17,7 +17,7 @@ export const metadata = {
   title: 'Studio Delivery Console',
   description: 'Admin dashboard for photo delivery automation.',
   icons: {
-    icon: '/pics/favicon3.ico'
+    icon: '/pics/favicon.ico'
   }
 };
 
