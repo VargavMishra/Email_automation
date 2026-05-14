@@ -486,7 +486,7 @@ export function DashboardShell() {
       <section className="app-container w-full space-y-6">
         {/* Crextio Top Navigation */}
         <nav className="flex justify-between items-center mb-8 relative z-50">
-          <div className="text-xl font-semibold px-6 py-2 border border-gray-200 rounded-full bg-white/50 backdrop-blur-sm">GlamFlame Studios</div>
+          <div className="text-xl font-semibold px-6 py-2 border border-gray-200 rounded-full bg-white/50 backdrop-blur-sm">StudioFlow Automation</div>
           
           <div className="hidden lg:flex gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-full">
             <a href="#" onClick={() => setActiveTab('dashboard')} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-800 hover:bg-black/5'}`}>Dashboard</a>
