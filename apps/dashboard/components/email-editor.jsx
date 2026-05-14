@@ -125,7 +125,7 @@ export function EmailEditor({ templates, project, onSend, isSending }) {
       </div>
 
       {error ? (
-        <p className="glass-inner relative z-10 mt-4 rounded-xl px-4 py-3 text-sm text-[#9f4025]">
+        <p className="glass-inner relative z-10 mt-4 rounded-xl px-4 py-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
       ) : null}

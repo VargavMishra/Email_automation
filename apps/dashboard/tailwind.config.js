@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './app/**/*.{js,jsx}',
     './components/**/*.{js,jsx}',
@@ -11,7 +12,19 @@ module.exports = {
         sand: '#ffffff',
         ink: '#1a1a1a',
         coral: '#fcd34d',
-        sage: '#a4aebb'
+        sage: '#a4aebb',
+        midnight: {
+          main: '#0B0F19',
+          secondary: '#111827',
+          elevated: '#161B26',
+          nav: '#0D1320'
+        },
+        cyber: {
+          blue: '#2563EB',
+          purple: '#9333EA',
+          pink: '#EC4899',
+          cyan: '#06B6D4'
+        }
       },
       boxShadow: {
         panel: '0 10px 30px rgba(0, 0, 0, 0.03)'
