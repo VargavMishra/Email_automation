@@ -4,6 +4,7 @@
 
 :root {
   color-scheme: light;
+  --color-ink: 26 26 26;
   --bg-color: #a4aebb;
   --app-bg: radial-gradient(circle at top right, #fff4cc 0%, #fffbf0 40%, #ffffff 100%);
   --text-main: #1a1a1a;
@@ -23,6 +24,7 @@
 
 html.dark {
   color-scheme: dark;
+  --color-ink: 249 250 251;
   --bg-color: #0B0F19; /* Midnight Main */
   --app-bg: radial-gradient(circle at top right, #111827 0%, #0B0F19 100%);
   --text-main: #F9FAFB;

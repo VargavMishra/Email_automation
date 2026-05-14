@@ -10,7 +10,7 @@ module.exports = {
     extend: {
       colors: {
         sand: '#ffffff',
-        ink: '#1a1a1a',
+        ink: 'rgb(var(--color-ink) / <alpha-value>)',
         coral: '#fcd34d',
         sage: '#a4aebb',
         midnight: {
