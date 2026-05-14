@@ -25,7 +25,7 @@ export function LogList({ logs }) {
                   {log.project?.projectCode ?? 'NO-CODE'} | {log.recipientEmail}
                 </p>
               </div>
-              <span className="rounded-xl bg-white/80 px-3 py-1 text-xs font-semibold text-ink shadow-sm">
+              <span className="rounded-xl bg-white/80 dark:bg-white/10 px-3 py-1 text-xs font-semibold text-ink shadow-sm">
                 {log.status}
               </span>
             </div>
@@ -46,7 +46,7 @@ export function LogList({ logs }) {
         {logs.length > 3 && (
           <button 
             onClick={() => setShowAll(!showAll)}
-            className="w-full mt-2 py-3 rounded-xl border border-gray-200 bg-white/40 hover:bg-white text-sm font-medium text-ink transition-all flex items-center justify-center gap-2"
+            className="w-full mt-2 py-3 rounded-xl border border-gray-200 bg-white/40 hover:bg-white dark:bg-white/5 dark:hover:bg-white/10 text-sm font-medium text-ink transition-all flex items-center justify-center gap-2"
           >
             {showAll ? 'Show less' : `Show ${logs.length - 3} more logs`}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-300 ${showAll ? 'rotate-180' : ''}`}>

@@ -408,7 +408,7 @@ export function OperationsPanel({
               key={key}
               type="button"
               onClick={() => setMode(key)}
-              className={`rounded-xl px-3 py-2 font-semibold transition ${mode === key ? 'bg-ink text-white shadow-sm' : 'text-ink/55 hover:text-ink'}`}
+              className={`rounded-xl px-3 py-2 font-semibold transition ${mode === key ? 'bg-zinc-800 text-white shadow-sm' : 'text-ink/55 hover:text-ink'}`}
             >
               {label}
             </button>
@@ -420,7 +420,7 @@ export function OperationsPanel({
         <div className="relative z-10 mt-5">
           <div className="glass-inner inline-flex rounded-2xl p-1 text-sm">
             {[ ['create', 'Add Client'], ['edit', 'Edit Existing'] ].map(([key, label]) => (
-              <button key={key} type="button" onClick={() => setClientMode(key)} className={`rounded-xl px-3 py-2 font-semibold transition ${clientMode === key ? 'bg-ink text-white shadow-sm' : 'text-ink/55 hover:text-ink'}`}>{label}</button>
+              <button key={key} type="button" onClick={() => setClientMode(key)} className={`rounded-xl px-3 py-2 font-semibold transition ${clientMode === key ? 'bg-zinc-800 text-white shadow-sm' : 'text-ink/55 hover:text-ink'}`}>{label}</button>
             ))}
           </div>
           {clientMode === 'create' ? (

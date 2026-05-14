@@ -163,7 +163,7 @@ export function ProjectTable({
         <div className="px-6 py-4 border-t border-ink/5">
           <button 
             onClick={() => setShowAll(!showAll)}
-            className="w-full py-3 rounded-xl border border-gray-200 bg-white/40 hover:bg-white text-sm font-medium text-ink transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl border border-gray-200 bg-white/40 hover:bg-white dark:bg-white/5 dark:hover:bg-white/10 text-sm font-medium text-ink transition-all flex items-center justify-center gap-2"
           >
             {showAll ? 'Show less' : `Show ${projects.length - initialLimit} more projects`}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-300 ${showAll ? 'rotate-180' : ''}`}>
