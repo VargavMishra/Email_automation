@@ -94,7 +94,7 @@ export function ProjectTable({
               return (
                 <tr
                   key={project.id}
-                  className={`border-t border-ink/10 align-top transition hover:bg-white/40 ${isSelected ? 'bg-white/55' : ''}`}
+                  className={`border-t border-ink/10 align-top transition hover:bg-white/40 dark:hover:bg-white/5 ${isSelected ? 'bg-white/55 dark:bg-white/10' : ''}`}
                 >
                   <td className="px-6 py-5">
                     <p className="font-semibold text-ink">{project.title}</p>
